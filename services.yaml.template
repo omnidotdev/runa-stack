@@ -11,6 +11,8 @@ services:
   # ----------------------------
   - gatekeeper:
       repo: https://github.com/omnidotdev/gatekeeper#master
+  - aether:
+      repo: https://github.com/omnidotdev/aether#master
   - runa-api:
       repo: https://github.com/omnidotdev/runa-api#master
   - runa-app:
