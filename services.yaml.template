@@ -8,11 +8,17 @@ services:
   #        env:
   #          - TILT_CUSTOM_REPO_ENV_PATH: ../repo-path/.env.local
   #
+  #   metarepo: if true, auto-discover services in {path}/services/*/Tiltfile (optional)
+  #
   # ----------------------------
-  - gatekeeper:
-      repo: https://github.com/omnidotdev/gatekeeper#master
+  # Core platform services (HIDRA = umbrella IAM)
+  - hidra:
+      repo: https://github.com/omnidotdev/hidra#master
+      path: ~/projects/omni/hidra
+      metarepo: true
   - aether:
       repo: https://github.com/omnidotdev/aether#master
+  # Product services
   - runa-api:
       repo: https://github.com/omnidotdev/runa-api#master
   - runa-app:
