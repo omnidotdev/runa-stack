@@ -1,0 +1,11 @@
+# Development override - build from source instead of pulling images
+# Usage: docker compose -f compose.yaml -f compose.dev.yaml up
+
+services:
+  api:
+    build: ./services/runa-api
+    image: runa-api:dev
+
+  app:
+    build: ./services/runa-app
+    image: runa-app:dev
