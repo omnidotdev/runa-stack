@@ -16,7 +16,7 @@ services:
       - "${DB_PORT:-5432}:5432"
 
   api:
-    image: ghcr.io/omnidotdev/runa-api:latest
+    build: ./services/runa-api
     environment:
       SELF_HOSTED: "true"
       DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD}@db:5432/${DB_NAME:-runa}
@@ -32,12 +32,16 @@ services:
       - "${API_PORT:-4000}:4000"
 
   app:
-    image: ghcr.io/omnidotdev/runa-app:latest
+    build: ./services/runa-app
     environment:
       NODE_ENV: production
       SELF_HOSTED: "true"
       BASE_URL: ${BASE_URL:-http://localhost:3000}
       API_BASE_URL: ${API_BASE_URL:-http://localhost:4000}
+      # Internal URL for container-to-container communication
+      API_INTERNAL_URL: http://api:4000
+      # Database for email/password auth (self-hosted only)
+      DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD}@db:5432/${DB_NAME:-runa}
       AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET is required}
       # Authentication (email/password enabled by default, OAuth providers optional)
       # Google OAuth (optional)
@@ -51,7 +55,10 @@ services:
       OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
       OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
     depends_on:
-      - api
+      db:
+        condition: service_healthy
+      api:
+        condition: service_started
     ports:
       - "${APP_PORT:-3000}:3000"
 
