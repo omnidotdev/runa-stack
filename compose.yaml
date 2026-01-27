@@ -24,7 +24,7 @@ services:
       PORT: "4000"
       HOST: "0.0.0.0"
       NODE_ENV: production
-      CORS_ALLOWED_ORIGINS: http://localhost:3000
+      CORS_ALLOWED_ORIGINS: ${BASE_URL:-http://localhost:3000}
     depends_on:
       db:
         condition: service_healthy
@@ -35,9 +35,9 @@ services:
     image: ghcr.io/omnidotdev/runa-app:latest
     environment:
       NODE_ENV: production
-      VITE_SELF_HOSTED: "true"
-      VITE_BASE_URL: http://localhost:3000
-      VITE_API_BASE_URL: http://api:4000
+      SELF_HOSTED: "true"
+      BASE_URL: ${BASE_URL:-http://localhost:3000}
+      API_BASE_URL: ${API_BASE_URL:-http://localhost:4000}
       AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET is required}
       # Authentication (email/password enabled by default, OAuth providers optional)
       # Google OAuth (optional)
