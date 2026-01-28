@@ -16,7 +16,7 @@ services:
       - "${DB_PORT:-5432}:5432"
 
   api:
-    build: ./services/runa-api
+    image: ghcr.io/omnidotdev/runa-api:latest
     environment:
       SELF_HOSTED: "true"
       DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD}@db:5432/${DB_NAME:-runa}
@@ -32,7 +32,7 @@ services:
       - "${API_PORT:-4000}:4000"
 
   app:
-    build: ./services/runa-app
+    image: ghcr.io/omnidotdev/runa-app:latest
     environment:
       NODE_ENV: production
       SELF_HOSTED: "true"
