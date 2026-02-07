@@ -15,6 +15,26 @@ services:
     ports:
       - "${DB_PORT:-5432}:5432"
 
+  # Uncomment for connection pooling when scaling beyond 3 API replicas.
+  # Each API replica uses up to 20 connections; PgBouncer consolidates them.
+  # pgbouncer:
+  #   image: edoburu/pgbouncer:1.23.1
+  #   environment:
+  #     DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD}@db:5432/${DB_NAME:-runa}
+  #     POOL_MODE: transaction
+  #     MAX_CLIENT_CONN: 200
+  #     DEFAULT_POOL_SIZE: 20
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -h localhost -p 5432"]
+  #     interval: 5s
+  #     timeout: 5s
+  #     retries: 3
+  #   # No external port needed - only API connects to PgBouncer
+  #   # When enabled, update api/app DATABASE_URL to: postgres://${DB_USER:-postgres}:${DB_PASSWORD}@pgbouncer:5432/${DB_NAME:-runa}
+
   api:
     image: ghcr.io/omnidotdev/runa-api:latest
     environment:
