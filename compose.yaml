@@ -35,19 +35,92 @@ services:
   #   # No external port needed - only API connects to PgBouncer
   #   # When enabled, update api/app DATABASE_URL to: postgres://${DB_USER:-postgres}:${DB_PASSWORD}@pgbouncer:5432/${DB_NAME:-runa}
 
-  api:
-    image: ghcr.io/omnidotdev/runa-api:latest
+  # Platform services (auth, authorization, billing)
+  auth-db:
+    image: postgres:16-alpine
     environment:
-      SELF_HOSTED: "true"
-      DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD}@db:5432/${DB_NAME:-runa}
-      AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET is required}
-      PORT: "4000"
+      POSTGRES_DB: ${AUTH_DB_NAME:-auth}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+    volumes:
+      - auth_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  billing-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${BILLING_DB_NAME:-billing}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+    volumes:
+      - billing_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  warden-api:
+    image: ghcr.io/omnidotdev/warden-api:latest
+    environment:
+      DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD}@auth-db:5432/${AUTH_DB_NAME:-auth}
+      PORT: "4001"
+      HOST: "0.0.0.0"
+      NODE_ENV: production
+      CORS_ALLOWED_ORIGINS: ${BASE_URL:-http://localhost:3000},${AUTH_BASE_URL:-http://localhost:3001}
+    depends_on:
+      auth-db:
+        condition: service_healthy
+    ports:
+      - "${WARDEN_API_PORT:-4001}:4001"
+
+  gatekeeper-app:
+    image: ghcr.io/omnidotdev/gatekeeper-app:latest
+    environment:
+      NODE_ENV: production
+      VITE_BASE_URL: ${AUTH_BASE_URL:-http://localhost:3001}
+      VITE_API_BASE_URL: http://warden-api:4001
+    depends_on:
+      - warden-api
+    ports:
+      - "${GATEKEEPER_APP_PORT:-3001}:3000"
+
+  aether-api:
+    image: ghcr.io/omnidotdev/aether-api:latest
+    environment:
+      DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD}@billing-db:5432/${BILLING_DB_NAME:-billing}
+      PORT: "4002"
       HOST: "0.0.0.0"
       NODE_ENV: production
       CORS_ALLOWED_ORIGINS: ${BASE_URL:-http://localhost:3000}
     depends_on:
+      billing-db:
+        condition: service_healthy
+    ports:
+      - "${AETHER_API_PORT:-4002}:4002"
+
+  api:
+    image: ghcr.io/omnidotdev/runa-api:latest
+    environment:
+      DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD}@db:5432/${DB_NAME:-runa}
+      PORT: "4000"
+      HOST: "0.0.0.0"
+      NODE_ENV: production
+      CORS_ALLOWED_ORIGINS: ${BASE_URL:-http://localhost:3000}
+      AUTH_BASE_URL: ${AUTH_BASE_URL:-http://localhost:3001}
+      BILLING_BASE_URL: ${BILLING_BASE_URL:-http://localhost:4002}
+      AUTHZ_API_URL: ${AUTHZ_API_URL:-http://warden-api:4001}
+    depends_on:
       db:
         condition: service_healthy
+      warden-api:
+        condition: service_started
+      aether-api:
+        condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:4000/ready || exit 1"]
       interval: 10s
@@ -61,30 +134,24 @@ services:
     image: ghcr.io/omnidotdev/runa-app:latest
     environment:
       NODE_ENV: production
-      SELF_HOSTED: "true"
       BASE_URL: ${BASE_URL:-http://localhost:3000}
       API_BASE_URL: ${API_BASE_URL:-http://localhost:4000}
       # Internal URL for container-to-container communication
       API_INTERNAL_URL: http://api:4000
-      # Database for email/password auth (self-hosted only)
+      # Session cookie encryption (Better Auth)
       DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD}@db:5432/${DB_NAME:-runa}
       AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET is required}
-      # Authentication (email/password enabled by default, OAuth providers optional)
-      # Google OAuth (optional)
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
-      # GitHub OAuth (optional)
-      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
-      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
-      # Generic OIDC (optional, for enterprise SSO)
-      OIDC_ISSUER: ${OIDC_ISSUER:-}
-      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
-      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
+      AUTH_BASE_URL: ${AUTH_BASE_URL:-http://localhost:3001}
+      AUTH_CLIENT_ID: ${AUTH_CLIENT_ID:?AUTH_CLIENT_ID is required}
+      AUTH_CLIENT_SECRET: ${AUTH_CLIENT_SECRET:?AUTH_CLIENT_SECRET is required}
+      BILLING_BASE_URL: ${BILLING_BASE_URL:-http://localhost:4002}
     depends_on:
       db:
         condition: service_healthy
       api:
         condition: service_healthy
+      gatekeeper-app:
+        condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:3000/api/health || exit 1"]
       interval: 10s
@@ -96,3 +163,5 @@ services:
 
 volumes:
   db_data:
+  auth_db_data:
+  billing_db_data:
