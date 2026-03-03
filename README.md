@@ -22,7 +22,7 @@ To get started after setting up the service configuration, run `tilt up`. The `T
 
 ## Self-Hosting
 
-See the [Self-Hosting](https://docs.omni.dev/docs/self-hosting) documentation for deployment options.
+See the [Self-Hosting](https://docs.omni.dev/help/self-hosting) documentation for deployment options.
 
 ## License
 
