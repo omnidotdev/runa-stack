@@ -22,7 +22,31 @@ To get started after setting up the service configuration, run `tilt up`. The `T
 
 ## Self-Hosting
 
-See the [Self-Hosting](https://docs.omni.dev/help/self-hosting) documentation for deployment options.
+```bash
+git clone https://github.com/omnidotdev/runa-stack.git
+cd runa-stack
+cp .env.local.template .env.local
+# Generate secrets: openssl rand -base64 32
+# Set DB_PASSWORD, AUTH_SECRET, AUTH_CLIENT_ID, AUTH_CLIENT_SECRET in .env.local
+docker compose -f compose.self-hosted.yaml --env-file .env.local up -d
+```
+
+This starts 4 containers:
+
+| Container | Description | Port |
+|-----------|-------------|------|
+| `db` | PostgreSQL | 5432 |
+| `auth` | Authentication (login/signup) | 3001 |
+| `api` | Runa API | 4000 |
+| `app` | Runa web app | 3000 |
+
+Open `http://localhost:3000` and create your first account.
+
+Verification URLs appear in the auth container logs:
+
+```bash
+docker compose -f compose.self-hosted.yaml logs auth
+```
 
 ## License
 
