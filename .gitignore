@@ -8,4 +8,6 @@
 !Tiltfile
 !compose.yaml
 !compose.dev.yaml
+!compose.self-hosted.yaml
+!init-db.sh
 !.env.local.template
