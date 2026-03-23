@@ -12,8 +12,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-    ports:
-      - "${DB_PORT:-5432}:5432"
+    # ports:
+    #   - "${DB_PORT:-5432}:5432"
 
   auth-db:
     image: postgres:16-alpine
@@ -30,18 +30,22 @@ services:
       retries: 5
 
   auth:
-    image: ghcr.io/omnidotdev/gatekeeper-app:latest
+    image: gatekeeper-app:local
+    extra_hosts:
+      - "localhost:host-gateway"
     environment:
       NODE_ENV: production
       DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD}@auth-db:5432/${AUTH_DB_NAME:-auth}
+      VITE_APP_URL: ${AUTH_BASE_URL:-http://localhost:3001}
       VITE_BASE_URL: ${AUTH_BASE_URL:-http://localhost:3001}
       AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET is required}
+      TRUSTED_DOMAIN: ${TRUSTED_DOMAIN:-localhost}
       SENDER_EMAIL_ADDRESS: ${SENDER_EMAIL_ADDRESS:-noreply@localhost}
     depends_on:
       auth-db:
         condition: service_healthy
     ports:
-      - "${AUTH_PORT:-3001}:3000"
+      - "127.0.0.1:${AUTH_PORT:-3001}:3000"
 
   api:
     image: ghcr.io/omnidotdev/runa-api:latest
@@ -66,7 +70,9 @@ services:
       - "${API_PORT:-4000}:4000"
 
   app:
-    image: ghcr.io/omnidotdev/runa-app:latest
+    image: runa-app:local
+    extra_hosts:
+      - "localhost:host-gateway"
     environment:
       NODE_ENV: production
       BASE_URL: ${BASE_URL:-http://localhost:3000}
@@ -75,6 +81,7 @@ services:
       DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD}@db:5432/${DB_NAME:-runa}
       AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET is required}
       AUTH_BASE_URL: ${AUTH_BASE_URL:-http://localhost:3001}
+      AUTH_INTERNAL_URL: http://auth:3000
       AUTH_CLIENT_ID: ${AUTH_CLIENT_ID:?AUTH_CLIENT_ID is required}
       AUTH_CLIENT_SECRET: ${AUTH_CLIENT_SECRET:?AUTH_CLIENT_SECRET is required}
     depends_on:
