@@ -30,7 +30,7 @@ services:
       retries: 5
 
   auth:
-    image: gatekeeper-app:local
+    image: ghcr.io/omnidotdev/gatekeeper-app:latest
     extra_hosts:
       - "localhost:host-gateway"
     environment:
@@ -70,7 +70,7 @@ services:
       - "${API_PORT:-4000}:4000"
 
   app:
-    image: runa-app:local
+    image: ghcr.io/omnidotdev/runa-app:latest
     extra_hosts:
       - "localhost:host-gateway"
     environment:
