@@ -41,6 +41,10 @@ services:
       AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET is required}
       TRUSTED_DOMAIN: ${TRUSTED_DOMAIN:-localhost}
       SENDER_EMAIL_ADDRESS: ${SENDER_EMAIL_ADDRESS:-noreply@localhost}
+      # Auto-seed OAuth client for self-hosted (reads by seedOAuthClient.mjs on boot)
+      DEFAULT_CLIENT_ID: ${AUTH_CLIENT_ID:?AUTH_CLIENT_ID is required}
+      DEFAULT_CLIENT_SECRET: ${AUTH_CLIENT_SECRET:?AUTH_CLIENT_SECRET is required}
+      DEFAULT_CLIENT_REDIRECT_URIS: ${BASE_URL:-http://localhost:3000}/api/auth/oauth2/callback/omni
     depends_on:
       auth-db:
         condition: service_healthy
