@@ -34,8 +34,8 @@ services:
     environment:
       NODE_ENV: production
       DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD}@auth-db:5432/${AUTH_DB_NAME:-auth}
-      VITE_APP_URL: ${AUTH_BASE_URL:-https://localhost:3001}
-      VITE_BASE_URL: ${AUTH_BASE_URL:-https://localhost:3001}
+      VITE_APP_URL: ${AUTH_BASE_URL:-http://localhost:3001}
+      VITE_BASE_URL: ${AUTH_BASE_URL:-http://localhost:3001}
       AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET is required}
       TRUSTED_DOMAIN: ${TRUSTED_DOMAIN:-localhost}
       SENDER_EMAIL_ADDRESS: ${SENDER_EMAIL_ADDRESS:-noreply@localhost}
@@ -43,7 +43,7 @@ services:
       # Auto-seed OAuth client for self-hosted (reads by seedOAuthClient.mjs on boot)
       DEFAULT_CLIENT_ID: ${AUTH_CLIENT_ID:?AUTH_CLIENT_ID is required}
       DEFAULT_CLIENT_SECRET: ${AUTH_CLIENT_SECRET:?AUTH_CLIENT_SECRET is required}
-      DEFAULT_CLIENT_REDIRECT_URIS: ${BASE_URL:-https://localhost}/api/auth/oauth2/callback/omni
+      DEFAULT_CLIENT_REDIRECT_URIS: ${BASE_URL:-http://localhost}/api/auth/oauth2/callback/omni
     depends_on:
       auth-db:
         condition: service_healthy
@@ -55,8 +55,8 @@ services:
       PORT: "4000"
       HOST: "0.0.0.0"
       NODE_ENV: production
-      CORS_ALLOWED_ORIGINS: ${BASE_URL:-https://localhost}
-      AUTH_BASE_URL: ${AUTH_BASE_URL:-https://localhost:3001}
+      CORS_ALLOWED_ORIGINS: ${BASE_URL:-http://localhost}
+      AUTH_BASE_URL: ${AUTH_BASE_URL:-http://localhost:3001}
       AUTHZ_ENABLED: "false"
     depends_on:
       db:
@@ -72,12 +72,12 @@ services:
     image: ghcr.io/omnidotdev/runa-app:latest
     environment:
       NODE_ENV: production
-      BASE_URL: ${BASE_URL:-https://localhost}
-      API_BASE_URL: ${API_BASE_URL:-https://localhost:4000}
+      BASE_URL: ${BASE_URL:-http://localhost}
+      API_BASE_URL: ${API_BASE_URL:-http://localhost:4000}
       API_INTERNAL_URL: http://api:4000
       DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD}@db:5432/${DB_NAME:-runa}
       AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET is required}
-      AUTH_BASE_URL: ${AUTH_BASE_URL:-https://localhost:3001}
+      AUTH_BASE_URL: ${AUTH_BASE_URL:-http://localhost:3001}
       AUTH_INTERNAL_URL: http://auth:3000
       AUTH_CLIENT_ID: ${AUTH_CLIENT_ID:?AUTH_CLIENT_ID is required}
       AUTH_CLIENT_SECRET: ${AUTH_CLIENT_SECRET:?AUTH_CLIENT_SECRET is required}
@@ -98,15 +98,12 @@ services:
   caddy:
     image: caddy:2-alpine
     ports:
-      - "${APP_PORT:-443}:443"
+      - "${APP_PORT_MAP:-80:80}"
       - "${AUTH_PORT:-3001}:3001"
       - "${API_PORT:-4000}:4000"
-    environment:
-      APP_PORT: "443"
-      AUTH_PORT: "3001"
-      API_PORT: "4000"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./.certs:/certs:ro
       - caddy_data:/data
       - caddy_config:/config
     depends_on:

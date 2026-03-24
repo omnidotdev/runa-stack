@@ -13,3 +13,4 @@
 !.env.local.template
 !Caddyfile
 !start.sh
+!stop.sh
