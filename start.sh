@@ -5,6 +5,13 @@ cd "$(dirname "$0")"
 
 ENV_FILE=".env.local"
 
+# Reset volumes if --fresh flag is passed
+if [ "${1:-}" = "--fresh" ]; then
+  echo "Removing existing containers and volumes..."
+  docker compose --env-file "$ENV_FILE" down -v 2>/dev/null || true
+  rm -f "$ENV_FILE"
+fi
+
 # Generate .env.local on first run
 if [ ! -f "$ENV_FILE" ]; then
   echo "Generating secrets..."
@@ -22,7 +29,6 @@ docker compose --env-file "$ENV_FILE" up -d
 
 echo ""
 echo "Waiting for services to be healthy..."
-# Poll until app is healthy or timeout after 90s
 elapsed=0
 while [ $elapsed -lt 90 ]; do
   if docker compose --env-file "$ENV_FILE" ps --format json | grep -q '"Health":"healthy"' 2>/dev/null; then
