@@ -17,16 +17,16 @@ EOF
   echo "Created $ENV_FILE"
 fi
 
-echo "Starting Runa..."
-docker compose up -d
+echo "🌙 Starting Runa..."
+docker compose --env-file "$ENV_FILE" up -d
 
 echo ""
 echo "Waiting for services to be healthy..."
 # Poll until app is healthy or timeout after 90s
 elapsed=0
 while [ $elapsed -lt 90 ]; do
-  if docker compose ps --format json | grep -q '"Health":"healthy"' 2>/dev/null; then
-    health=$(docker compose ps --format '{{.Name}} {{.Health}}' 2>/dev/null)
+  if docker compose --env-file "$ENV_FILE" ps --format json | grep -q '"Health":"healthy"' 2>/dev/null; then
+    health=$(docker compose --env-file "$ENV_FILE" ps --format '{{.Name}} {{.Health}}' 2>/dev/null)
     if echo "$health" | grep -q "app" && ! echo "$health" | grep -q "starting"; then
       break
     fi
@@ -38,5 +38,5 @@ done
 echo ""
 
 echo ""
-echo "Runa is running at https://localhost"
+echo "🌙 Runa is running at https://localhost"
 echo "Accept the self-signed certificate in your browser to get started."
