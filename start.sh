@@ -145,6 +145,7 @@ WHERE NOT EXISTS (SELECT 1 FROM oauth_client WHERE client_id = '$AUTH_CLIENT_ID'
 
 echo ""
 echo "🌙 Runa is running at $APP_URL"
+echo "   Stop with: ./stop.sh"
 if [ "$PROTOCOL" = "http" ]; then
-  echo "Install mkcert (https://github.com/FiloSottile/mkcert) and run ./start.sh --fresh for trusted HTTPS"
+  echo "   Install mkcert (https://github.com/FiloSottile/mkcert) and run ./start.sh --fresh for trusted HTTPS"
 fi

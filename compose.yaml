@@ -98,9 +98,9 @@ services:
       AUTH_INTERNAL_URL: http://auth:3000
       AUTH_CLIENT_ID: ${AUTH_CLIENT_ID:?AUTH_CLIENT_ID is required}
       AUTH_CLIENT_SECRET: ${AUTH_CLIENT_SECRET:?AUTH_CLIENT_SECRET is required}
-      # Stopgap: current GHCR image checks SELF_HOSTED for billing UI.
-      # Remove after image rebuild with hasBilling (BILLING_BASE_URL) checks.
-      SELF_HOSTED: "true"
+      # Override build-time Vite values that assume cloud infrastructure
+      VITE_BILLING_BASE_URL: ""
+      VITE_CONSOLE_URL: ""
     depends_on:
       db:
         condition: service_healthy
