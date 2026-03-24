@@ -25,29 +25,64 @@ To get started after setting up the service configuration, run `tilt up`. The `T
 ```bash
 git clone https://github.com/omnidotdev/runa-stack.git
 cd runa-stack
-cp .env.local.template .env.local
-# Generate secrets: openssl rand -base64 32
-# Set DB_PASSWORD, AUTH_SECRET, AUTH_CLIENT_ID, AUTH_CLIENT_SECRET in .env.local
-docker compose --env-file .env.local up -d
+./start.sh
 ```
 
-This starts 5 containers:
+That's it. The start script auto-generates secrets, starts all containers, and waits for healthy.
 
-| Container | Description | Port |
-|-----------|-------------|------|
-| `db` | PostgreSQL (Runa) | 5432 |
+### HTTPS
+
+If [mkcert](https://github.com/FiloSottile/mkcert) is installed, the start script automatically generates trusted localhost certificates — HTTPS with zero browser warnings. Without mkcert, it falls back to HTTP.
+
+```bash
+# Install mkcert (optional, for trusted HTTPS)
+# macOS: brew install mkcert
+# Arch: pacman -S mkcert
+# Ubuntu: apt install mkcert
+
+# Then start (or restart with --fresh if already running)
+./start.sh --fresh
+```
+
+### Custom Domain
+
+Set your domain in `.env.local` and Caddy auto-provisions Let's Encrypt certificates:
+
+```bash
+BASE_URL=https://runa.example.com
+AUTH_BASE_URL=https://auth.example.com
+API_BASE_URL=https://api.example.com
+```
+
+### Services
+
+| Container | Description | Default Port |
+|-----------|-------------|--------------|
+| `db` | PostgreSQL (Runa) | — |
 | `auth-db` | PostgreSQL (auth) | — |
 | `auth` | Authentication (login/signup) | 3001 |
 | `api` | Runa API | 4000 |
-| `app` | Runa web app | 3000 |
+| `app` | Runa web app | 443 (HTTPS) / 80 (HTTP) |
+| `caddy` | Reverse proxy (TLS termination) | — |
 
-Open `http://localhost:3000` and create your first account.
-
-Verification URLs appear in the auth container logs:
+### Managing
 
 ```bash
-docker compose logs auth
+./start.sh          # Start (generates secrets on first run)
+./start.sh --fresh  # Clean slate — wipe data and restart
+./stop.sh           # Stop, preserve data
+./stop.sh --clean   # Stop and remove all data, secrets, and certs
 ```
+
+### Email Verification
+
+Without SMTP configured, verification URLs appear in the auth container logs:
+
+```bash
+docker compose --env-file .env.local logs auth
+```
+
+To enable email delivery, set `SENDER_EMAIL_ADDRESS` in `.env.local`.
 
 ## License
 
