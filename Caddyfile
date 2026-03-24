@@ -1,21 +1,15 @@
-# Runa self-hosted reverse proxy
-# Caddy auto-provisions self-signed certs for localhost
-# For custom domains, replace localhost with your domain for auto Let's Encrypt
-
-# App (Runa)
+# Auto-generated — trusted HTTPS via mkcert
 https://localhost:{$APP_PORT:443} {
-	tls internal
+	tls /certs/localhost.pem /certs/localhost-key.pem
 	reverse_proxy app:3000
 }
 
-# Auth (Gatekeeper)
 https://localhost:{$AUTH_PORT:3001} {
-	tls internal
+	tls /certs/localhost.pem /certs/localhost-key.pem
 	reverse_proxy auth:3000
 }
 
-# API
 https://localhost:{$API_PORT:4000} {
-	tls internal
+	tls /certs/localhost.pem /certs/localhost-key.pem
 	reverse_proxy api:4000
 }

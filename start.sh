@@ -120,6 +120,25 @@ while [ $elapsed -lt 90 ]; do
 done
 echo ""
 
+# Seed OAuth client in Gatekeeper (idempotent)
+source "$ENV_FILE"
+REDIRECT_URI="$APP_URL/api/auth/oauth2/callback/omni"
+HASHED_SECRET=$(echo -n "$AUTH_CLIENT_SECRET" | openssl dgst -sha256 -binary | openssl base64 -A | tr '+/' '-_' | tr -d '=')
+docker compose --env-file "$ENV_FILE" exec -T auth-db psql -U "${DB_USER:-postgres}" -d "${AUTH_DB_NAME:-auth}" -c "
+INSERT INTO oauth_client (
+  id, client_id, client_secret, name, redirect_uris,
+  skip_consent, require_pkce, grant_types, response_types,
+  token_endpoint_auth_method, created_at, updated_at
+) SELECT
+  gen_random_uuid(), '$AUTH_CLIENT_ID', '$HASHED_SECRET', 'default',
+  ARRAY['$REDIRECT_URI'],
+  true, true,
+  ARRAY['authorization_code', 'refresh_token'],
+  ARRAY['code'],
+  'client_secret_post', NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM oauth_client WHERE client_id = '$AUTH_CLIENT_ID');
+" >/dev/null 2>&1
+
 echo ""
 echo "🌙 Runa is running at $APP_URL"
 if [ "$PROTOCOL" = "http" ]; then
