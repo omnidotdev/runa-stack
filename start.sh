@@ -16,6 +16,9 @@ fi
 
 # Generate .env.local on first run
 if [ ! -f "$ENV_FILE" ]; then
+  # New secrets won't match old database volumes — wipe them
+  docker compose down -v 2>/dev/null || true
+
   echo "Generating secrets..."
 
   # Detect HTTPS capability
