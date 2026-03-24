@@ -9,15 +9,19 @@ CERTS_DIR=".certs"
 # Reset volumes if --fresh flag is passed
 if [ "${1:-}" = "--fresh" ]; then
   echo "Removing existing containers and volumes..."
-  docker compose --env-file "$ENV_FILE" down -v 2>/dev/null || true
+  docker compose --env-file "$ENV_FILE" down 2>/dev/null || true
+  docker volume ls -q --filter "name=runa-stack_" | xargs -r docker volume rm 2>/dev/null || true
   rm -f "$ENV_FILE"
   rm -rf "$CERTS_DIR"
 fi
 
 # Generate .env.local on first run
 if [ ! -f "$ENV_FILE" ]; then
-  # New secrets won't match old database volumes — wipe them
-  docker compose down -v 2>/dev/null || true
+  # New secrets won't match old database volumes — wipe them.
+  # Can't use `docker compose down -v` here because compose.yaml requires
+  # env vars (DB_PASSWORD etc.) that don't exist yet. Remove volumes directly.
+  docker compose down 2>/dev/null || true
+  docker volume ls -q --filter "name=runa-stack_" | xargs -r docker volume rm 2>/dev/null || true
 
   echo "Generating secrets..."
 
