@@ -12,3 +12,4 @@
 !init-db.sh
 !.env.local.template
 !Caddyfile
+!start.sh
