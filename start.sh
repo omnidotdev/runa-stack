@@ -10,7 +10,7 @@ CERTS_DIR=".certs"
 if [ "${1:-}" = "--fresh" ]; then
   echo "Removing existing containers and volumes..."
   docker compose --env-file "$ENV_FILE" down 2>/dev/null || true
-  docker volume ls -q --filter "name=runa-stack_" | xargs -r docker volume rm 2>/dev/null || true
+  docker volume ls -q --filter "name=runa_" | xargs -r docker volume rm 2>/dev/null || true
   rm -f "$ENV_FILE"
   rm -rf "$CERTS_DIR"
 fi
@@ -21,7 +21,7 @@ if [ ! -f "$ENV_FILE" ]; then
   # Can't use `docker compose down -v` here because compose.yaml requires
   # env vars (DB_PASSWORD etc.) that don't exist yet. Remove volumes directly.
   docker compose down 2>/dev/null || true
-  docker volume ls -q --filter "name=runa-stack_" | xargs -r docker volume rm 2>/dev/null || true
+  docker volume ls -q --filter "name=runa_" | xargs -r docker volume rm 2>/dev/null || true
 
   echo "Generating secrets..."
 
