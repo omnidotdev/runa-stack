@@ -29,6 +29,13 @@ services:
       timeout: 5s
       retries: 5
 
+  # NOTE: GHCR image sign-up form has client-side validation issues.
+  # Create users via API instead:
+  #   curl -sk -X POST https://localhost:3001/sign-up/email \
+  #     -H 'Content-Type: application/json' \
+  #     -d '{"name":"...","email":"...","password":"...","tosAccepted":true,"privacyPolicyAccepted":true}'
+  # Then verify email: docker compose exec auth-db psql -U postgres -d auth \
+  #   -c "UPDATE \"user\" SET email_verified = true WHERE email = '...';"
   auth:
     image: ghcr.io/omnidotdev/gatekeeper-app:latest
     environment:
@@ -91,6 +98,9 @@ services:
       AUTH_INTERNAL_URL: http://auth:3000
       AUTH_CLIENT_ID: ${AUTH_CLIENT_ID:?AUTH_CLIENT_ID is required}
       AUTH_CLIENT_SECRET: ${AUTH_CLIENT_SECRET:?AUTH_CLIENT_SECRET is required}
+      # Stopgap: current GHCR image checks SELF_HOSTED for billing UI.
+      # Remove after image rebuild with hasBilling (BILLING_BASE_URL) checks.
+      SELF_HOSTED: "true"
     depends_on:
       db:
         condition: service_healthy
