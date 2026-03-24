@@ -52,11 +52,15 @@ services:
 
   api:
     image: ghcr.io/omnidotdev/runa-api:latest
+    extra_hosts:
+      - "localhost:host-gateway"
     environment:
       DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD}@db:5432/${DB_NAME:-runa}
       PORT: "4000"
       HOST: "0.0.0.0"
       NODE_ENV: production
+      # Skip TLS verification for internal calls to Caddy (mkcert CA not in container)
+      NODE_TLS_REJECT_UNAUTHORIZED: "0"
       CORS_ALLOWED_ORIGINS: ${BASE_URL:-http://localhost}
       AUTH_BASE_URL: ${AUTH_BASE_URL:-http://localhost:3001}
       AUTHZ_ENABLED: "false"
