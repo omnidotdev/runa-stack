@@ -22,13 +22,35 @@ To get started after setting up the service configuration, run `tilt up`. The `T
 
 ## Self-Hosting
 
+The recommended way to self-host Runa is via the [Run CLI](https://github.com/omnidotdev/run-cli):
+
 ```bash
-git clone https://github.com/omnidotdev/runa-stack.git
-cd runa-stack
-./start.sh
+# Install Run
+curl -fsSL https://run.omni.dev/install.sh | sh
+
+# Deploy Runa
+run up runa
 ```
 
-That's it. The start script auto-generates secrets, starts all containers, and waits for healthy.
+Run handles everything: secret generation, TLS certificates, Docker Compose orchestration, health checks, and OAuth client provisioning.
+
+```bash
+run plan runa        # Preview what will be deployed
+run logs runa        # Tail container logs
+run down runa        # Stop, preserve data
+run down runa --fresh  # Stop and wipe all data
+```
+
+### Legacy scripts
+
+The `start.sh` and `stop.sh` scripts in this repo still work but are superseded by Run:
+
+```bash
+./start.sh          # Start (generates secrets on first run)
+./start.sh --fresh  # Clean slate — wipe data and restart
+./stop.sh           # Stop, preserve data
+./stop.sh --clean   # Stop and remove all data, secrets, and certs
+```
 
 ### HTTPS
 
@@ -67,11 +89,14 @@ API_BASE_URL=https://api.example.com
 
 ### Managing
 
+Use Run CLI for deployment management:
+
 ```bash
-./start.sh          # Start (generates secrets on first run)
-./start.sh --fresh  # Clean slate — wipe data and restart
-./stop.sh           # Stop, preserve data
-./stop.sh --clean   # Stop and remove all data, secrets, and certs
+run up runa            # Start (generates secrets on first run)
+run down runa --fresh  # Clean slate — wipe data and restart
+run down runa          # Stop, preserve data
+run logs runa          # Tail container logs
+run plan runa          # Preview deployment plan
 ```
 
 ### Email Verification
