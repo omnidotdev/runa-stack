@@ -2,7 +2,7 @@ name: runa
 
 services:
   db:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     environment:
       POSTGRES_DB: ${DB_NAME:-runa}
       POSTGRES_USER: ${DB_USER:-postgres}
@@ -18,7 +18,7 @@ services:
     #   - "${DB_PORT:-5432}:5432"
 
   auth-db:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     environment:
       POSTGRES_DB: ${AUTH_DB_NAME:-auth}
       POSTGRES_USER: ${DB_USER:-postgres}
@@ -39,7 +39,7 @@ services:
   # Then verify email: docker compose exec auth-db psql -U postgres -d auth \
   #   -c "UPDATE \"user\" SET email_verified = true WHERE email = '...';"
   auth:
-    image: ghcr.io/omnidotdev/gatekeeper-app:latest
+    image: manifold.omni.dev/omnidotdev/gatekeeper-app:latest
     environment:
       NODE_ENV: production
       DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD}@auth-db:5432/${AUTH_DB_NAME:-auth}
@@ -60,7 +60,7 @@ services:
         condition: service_healthy
 
   api:
-    image: ghcr.io/omnidotdev/runa-api:latest
+    image: manifold.omni.dev/omnidotdev/runa-api:latest
     extra_hosts:
       - "localhost:host-gateway"
     environment:
@@ -84,7 +84,7 @@ services:
       start_period: 10s
 
   app:
-    image: ghcr.io/omnidotdev/runa-app:latest
+    image: manifold.omni.dev/omnidotdev/runa-app:latest
     extra_hosts:
       - "localhost:host-gateway"
     environment:
