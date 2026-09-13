@@ -109,6 +109,21 @@ docker compose --env-file .env.local logs auth
 
 To enable email delivery, set `SENDER_EMAIL_ADDRESS` in `.env.local`.
 
+### Task Notifications
+
+Runa can email people when they are assigned to a task. This is optional: when
+the Herald mail settings are unset, notification emails are a no-op and the app
+runs normally. To enable them, set the following in `.env.local`:
+
+```bash
+HERALD_API_URL=https://your-herald-endpoint
+HERALD_API_KEY=your-api-key
+HERALD_FROM_EMAIL=no-reply@your-domain
+```
+
+`APP_BASE_URL` (defaults to `BASE_URL`) is used to build the task links in those
+emails. Users can opt out per account from workspace settings.
+
 ## License
 
 The code in this repository is licensed under Apache 2.0, &copy; [Omni LLC](https://omni.dev). See [LICENSE.md](LICENSE.md) for more information.

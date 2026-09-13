@@ -81,6 +81,12 @@ services:
       S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-minioadmin}
       # Attachments are streamed through the API, so this must be browser-reachable
       PUBLIC_API_URL: ${API_BASE_URL:-http://localhost:4000}
+      # Public origin of the web app, used to build task links in notification emails
+      APP_BASE_URL: ${BASE_URL:-http://localhost}
+      # Transactional email (Herald). Unset leaves notification emails a graceful noop
+      HERALD_API_URL: ${HERALD_API_URL:-}
+      HERALD_API_KEY: ${HERALD_API_KEY:-}
+      HERALD_FROM_EMAIL: ${HERALD_FROM_EMAIL:-}
     depends_on:
       db:
         condition: service_healthy
