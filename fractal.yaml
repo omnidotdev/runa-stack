@@ -1,0 +1,193 @@
+# Omni App descriptor for runa
+# Canonical, human-readable source of truth for deploying runa on Fractal
+# Consumed by the Fractal catalog (one-click deploy) and, later, the run CLI
+# Translated from compose.yaml, .env.local.template, and run-core catalog/runa.toml
+
+# Descriptor-format version, not an app or release version
+version: "1"
+
+app:
+  name: Runa
+  icon: "🌙"
+  category: productivity
+  blurb: "A streamlined project management tool with agile workflows such as kanban"
+  repoUrl: https://github.com/omnidotdev/runa-stack
+  license: Apache-2.0
+
+services:
+  # Postgres companion that holds runa application data
+  db:
+    source:
+      image:
+        repository: postgres
+        # third-party upstream image, keeps its upstream tag
+        tag: "18-alpine"
+    serviceType: database
+    datastore: true
+    build:
+      mode: none
+    deploy:
+      env:
+        - name: DB_NAME
+          required: false
+          value: "runa"
+          description: "Postgres database name for runa application data"
+        - name: DB_USER
+          required: false
+          value: "postgres"
+          description: "Postgres role the application connects as"
+        - name: DB_PASSWORD
+          required: true
+          secret: true
+          generate: random
+          description: "Password for the Postgres application role"
+
+  # GraphQL API, also streams task attachments to the browser
+  api:
+    source:
+      image:
+        repository: api.manifold.omni.dev/omni/runa-api
+        # git-hash pin, Omni versioning scheme TBD
+        tag: "b5d1ba6c4539fb0d755f8936ca2c492477d11113"
+    serviceType: web
+    build:
+      mode: none
+    expose:
+      port: 4000
+      tls: true
+    deploy:
+      healthCheck:
+        path: /ready
+        port: 4000
+      env:
+        - name: DATABASE_URL
+          required: true
+          value: "postgres://${DB_USER:-postgres}:${DB_PASSWORD}@db:5432/${DB_NAME:-runa}"
+          description: "Connection string for the runa Postgres database, wired to the db service"
+        - name: PORT
+          required: false
+          value: "4000"
+          description: "Port the api server listens on"
+        - name: HOST
+          required: false
+          value: "0.0.0.0"
+          description: "Interface the api server binds to"
+        - name: NODE_ENV
+          required: false
+          value: "production"
+          description: "Node runtime environment"
+        - name: NODE_TLS_REJECT_UNAUTHORIZED
+          required: false
+          value: "0"
+          description: "Self-host only, skips TLS verification for internal calls to the bundled proxy whose local CA is untrusted in the container, omit on managed deploys that terminate TLS at the gateway"
+        - name: CORS_ALLOWED_ORIGINS
+          required: false
+          value: "${BASE_URL:-http://localhost}"
+          description: "Origins permitted to call the api, defaults to the app base URL"
+        - name: AUTH_BASE_URL
+          required: false
+          value: "${AUTH_BASE_URL:-http://localhost:3001}"
+          description: "Public base URL of the identity provider"
+        - name: AUTHZ_ENABLED
+          required: false
+          value: "false"
+          description: "Enable fine-grained authorization enforcement"
+        - name: S3_BUCKET
+          required: false
+          value: "runa-content"
+          description: "Object storage bucket for task attachments"
+        - name: S3_REGION
+          required: false
+          value: "us-east-1"
+          description: "Object storage region"
+        - name: S3_ENDPOINT
+          required: false
+          value: "http://minio:9000"
+          description: "S3-compatible object storage endpoint for task attachments"
+        - name: S3_ACCESS_KEY_ID
+          required: false
+          value: "minioadmin"
+          description: "Access key id for the object storage endpoint, override the default in any real deployment"
+        - name: S3_SECRET_ACCESS_KEY
+          required: false
+          secret: true
+          value: "minioadmin"
+          description: "Secret access key for the object storage endpoint, override the default in any real deployment"
+        - name: PUBLIC_API_URL
+          required: false
+          value: "${API_BASE_URL:-http://localhost:4000}"
+          description: "Browser-reachable api URL, attachments are streamed through the api"
+
+  # Web frontend
+  app:
+    source:
+      image:
+        repository: api.manifold.omni.dev/omni/runa-app
+        # git-hash pin, Omni versioning scheme TBD
+        tag: "c05e96d36fc008978005e1c0346a32b88f7a278e"
+    serviceType: web
+    build:
+      mode: none
+    expose:
+      port: 3000
+      tls: true
+    deploy:
+      healthCheck:
+        path: /api/health
+        port: 3000
+      env:
+        - name: NODE_ENV
+          required: false
+          value: "production"
+          description: "Node runtime environment"
+        - name: NODE_TLS_REJECT_UNAUTHORIZED
+          required: false
+          value: "0"
+          description: "Self-host only, skips TLS verification for internal calls to the bundled proxy whose local CA is untrusted in the container, omit on managed deploys that terminate TLS at the gateway"
+        - name: BASE_URL
+          required: false
+          value: "${BASE_URL:-http://localhost}"
+          description: "Public base URL of the runa app"
+        - name: API_BASE_URL
+          required: false
+          value: "${API_BASE_URL:-http://localhost:4000}"
+          description: "Public base URL of the runa api"
+        - name: API_INTERNAL_URL
+          required: false
+          value: "http://api:4000"
+          description: "In-cluster URL of the api service"
+        - name: DATABASE_URL
+          required: true
+          value: "postgres://${DB_USER:-postgres}:${DB_PASSWORD}@db:5432/${DB_NAME:-runa}"
+          description: "Connection string for the runa Postgres database, wired to the db service"
+        - name: AUTH_SECRET
+          required: true
+          secret: true
+          generate: random
+          description: "Shared secret for signing and verifying auth sessions"
+        - name: AUTH_BASE_URL
+          required: false
+          value: "${AUTH_BASE_URL:-http://localhost:3001}"
+          description: "Public base URL of the identity provider"
+        - name: AUTH_INTERNAL_URL
+          required: false
+          value: "http://auth:3000"
+          description: "In-cluster URL of the identity provider"
+        - name: AUTH_CLIENT_ID
+          required: true
+          secret: true
+          generate: random
+          description: "OAuth client id runa uses to authenticate against the identity provider"
+        - name: AUTH_CLIENT_SECRET
+          required: true
+          secret: true
+          generate: random
+          description: "OAuth client secret runa uses to authenticate against the identity provider"
+        - name: VITE_BILLING_BASE_URL
+          required: false
+          value: ""
+          description: "Billing service base URL, empty disables the billing integration for self-hosted"
+        - name: VITE_CONSOLE_URL
+          required: false
+          value: ""
+          description: "Console URL, empty disables the console link for self-hosted"

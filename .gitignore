@@ -9,6 +9,7 @@
 !compose.yaml
 !compose.dev.yaml
 !compose.self-hosted.yaml
+!fractal.yaml
 !init-db.sh
 !.env.local.template
 !Caddyfile
