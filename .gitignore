@@ -15,3 +15,7 @@
 !Caddyfile
 !start.sh
 !stop.sh
+!e2e/
+!e2e/auth-smoke.mjs
+!e2e/package.json
+!e2e/README.md
